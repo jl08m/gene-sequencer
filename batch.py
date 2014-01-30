@@ -134,7 +134,8 @@ for i, seq in enumerate(json_seqlist["list"]):
     unlink(temp_seq_file.name)
 
     progress = int(round(float(i)/float(listsize)*float(100)))
-    sys.stderr.write("%d %%\n" %progress)
+    #sys.stderr.write("%d %%\n" %progress)
+    sys.stdout.write('%d/%d\n' % (float(i), float(listsize)))
 
 #    stop after #
 #    if i==0:

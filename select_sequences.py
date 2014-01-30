@@ -72,5 +72,9 @@ sys.stderr.write("bottom%d%%: %d sequences\n" %(getbot,len(bot)))
 
 #write to output file
 selectedlist_file.write(json.dumps(json_out, indent=2))
+t = open('temp/top.txt', 'w')
+t.write(json.dumps(top, indent=2))
+b = open('temp/bot.txt', 'w')
+b.write(json.dumps(bot, indent=2))
 
 
