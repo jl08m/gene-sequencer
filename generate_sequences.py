@@ -7,15 +7,22 @@
 #########################################
 #This can be used as a stand alone script
 #if all that is needed is the full list of sequences
+
+# Generates a list of permutated sequences based upon the parameters
+# Parameters:
+# bases: The number of bases to change per permutation.
+# spacer length: The number of bases that remain unchanged within the bases that are changed.
+# spacer position: The position within the changed bases to start the unchanged spacer.
+# start position: position to start permutation in the whole sequence.
+# end position: position to end permutation in the whole sequence.
 #########################################
-
-
 
 import itertools
 import sys
 from operator import itemgetter
 import json
 import re
+import logging
 
 #if more bases used, add to list
 BASES = ['A', 'C', 'G', 'T']
@@ -30,62 +37,61 @@ usage = """USAGE: genseq.py <sequence> <bases,spacer length, spacer position, be
     
 #############################################################################
 #generate permutations and create list of sequences
-def generate(bases=1, spacelen=0, spacepos=1, beg=1, end=-1):
-    retlist = []
+
+
+def generate_sequences(bases=1, spacer_length=0, spacer_position=1, start_position=1, end_position=-1):
+
     #set end to length of sequence
-    if end == -1:
-        end = len(Sequence)
+    if end_position == -1:
+        end_position = len(Sequence)
+
+    permutated_sequences = []
+
+    #Sequence position starts at 1-n. Must fix to match proper array notation.
+    start_position -= 1
     
-    #fix positions to match array 0-n 
-    beg -= 1
+    #Initialize slices.
+    slice_start = start_position
+    slice_end = slice_start + bases
+    spacer_end = spacer_position + spacer_length
     
-    #initialize while loop variables
-    #first slice initialize
-    slicebeg = beg      #beginning of slice in sequence
-    sliceend = slicebeg + bases   #end of slice in sequence
-    spacerend = spacepos + spacelen
-    
-    #get permutations
-    while (sliceend <= end):
+    while slice_end <= end_position:
         #get sequence parts before and after slice
-        preslice = Sequence[:slicebeg]
-        postslice = Sequence[sliceend:]
-        permslicelist = []
+        preslice_sequence = Sequence[:slice_start]
+        postslice_sequence = Sequence[slice_end:]
+        permutated_slices = []
         
-        #get slice 
-        seqslice = Sequence[slicebeg:sliceend]
+        slice_sequence = Sequence[slice_start:slice_end]
         
         #part of slice that gets permutated
-        permslice = seqslice[:spacepos] + seqslice[spacerend:]
+        permutation_piece = slice_sequence[:spacer_position] + slice_sequence[spacer_end:]
         
-        #spacer slice
-        spacer = seqslice[spacepos:spacerend]
+        spacer = slice_sequence[spacer_position:spacer_end]
         
         #get permutations
-        temp = itertools.product(BASES, repeat=len(permslice))
-        perms = []
-        for i in temp:
-            perms.append("".join(i))
+        #FIXME: this part can be optimized. Duplicate permutations possible.
+        temp = itertools.product(BASES, repeat=len(permutation_piece))
+        permutations = []
+        for tmp in temp:
+            permutations.append(str(tmp))
         
         #deprecated permutation part
-        ##perms = permuteAll(permslice)
+        ##perms = permuteAll(permutation_piece)
         ##get rid of duplicate starting sequence in permutated list
         ##del perms[0]
         
         #reattach permutations with spacer
-        for perm in perms:
-            permslicelist.append(perm[:spacepos] + spacer + perm[spacepos:])
+        for permutation in permutations:
+            permutated_slices.append(permutation[:spacer_position] + spacer + permutation[spacer_position:])
             
         #put slice back into sequence parts
-        for perm in permslicelist:
-            retlist.append(preslice + perm + postslice)    
+        for permutated_slice in permutated_slices:
+            permutated_sequences.append(preslice_sequence + permutated_slice + postslice_sequence)
         
-        #increment slice start and end positions    
-        slicebeg += 1
-        sliceend = slicebeg + bases
-    
+        slice_start += 1
+        slice_end = slice_start + bases
 
-    return retlist
+    return permutated_sequences
 
 ##############################################################################
 #error parameters
@@ -94,11 +100,12 @@ def errorcheck(bases, spacelen, spacepos, beg, end):
 
     
     if bases < 1 or bases > end:
+        raise ValueError("Invalid bases parameter: was less than 1)
         ErrorCode = 1
     elif beg < 1 or beg > end:
-        ErrorCode = 2
+        raise ValueError("invalid sequence starting position")
     elif end < beg or end > len(Sequence):
-        ErrorCode = 3
+        rase ValueError("invalid sequence ending position")
     elif bases > 1:
         if spacelen < 0 or spacelen > (bases - 2):
             ErrorCode = 4 
@@ -208,7 +215,7 @@ if error != 0:
     sys.exit(1)
     
 # Generate sequences
-SeqList = generate(Bases, Spacerlen, Spacerpos, Begpos, Endposition)
+SeqList = generate_sequences(Bases, Spacerlen, Spacerpos, Begpos, Endposition)
 
 #eliminate duplicates    
 SeqList = checkduplicates(SeqList)

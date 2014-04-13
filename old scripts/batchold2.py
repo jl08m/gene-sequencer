@@ -22,7 +22,7 @@ from scipy.stats.stats import pearsonr
 #rvals_filename = args[6]
 #msgs_filename = args[7]
 
-svm_filename = "svm-chrom-new.py"
+svm_filename = "svm-chrom.py"
 gen_filename  = "genseq.py"
 input_chrom_filename  = "fasta/test_atm.fasta"
 model_filename  = "a375_nuc.model.txt"
