@@ -29,8 +29,8 @@ BASES = ['A', 'C', 'G', 'T']
 NUM_BASES = len(BASES)
 Sequence = ""
 SeqList = []
-HEADER_FORM = 2
-HEADER_SPLIT = ' |=|:|-'
+#HEADER_FORM = 2
+#HEADER_SPLIT = ' |=|:|-'
 
 # example usage: geneseq.py somesequence.fasta 4,2,2,0,0 output.txt
 usage = """USAGE: genseq.py <sequence> <bases,spacer length, spacer position, beginning, end> <output file>\n"""
@@ -71,9 +71,9 @@ def generate_sequences(bases=1, spacer_length=0, spacer_position=1, start_positi
         #get permutations
         #FIXME: this part can be optimized. Duplicate permutations possible.
         temp = itertools.product(BASES, repeat=len(permutation_piece))
-        permutations = []
+        permutations = set()
         for tmp in temp:
-            permutations.append(str(tmp))
+            permutations.add(str(tmp))
         
         #deprecated permutation part
         ##perms = permuteAll(permutation_piece)
@@ -98,14 +98,12 @@ def generate_sequences(bases=1, spacer_length=0, spacer_position=1, start_positi
 def errorcheck(bases, spacelen, spacepos, beg, end):
     ErrorCode = 0
 
-    
     if bases < 1 or bases > end:
-        raise ValueError("Invalid bases parameter: was less than 1)
-        ErrorCode = 1
+        raise ValueError("Invalid bases parameter: was less than 1")
     elif beg < 1 or beg > end:
-        raise ValueError("invalid sequence starting position")
+        raise ValueError("Invalid sequence starting position")
     elif end < beg or end > len(Sequence):
-        rase ValueError("invalid sequence ending position")
+        raise ValueError("Invalid sequence ending position")
     elif bases > 1:
         if spacelen < 0 or spacelen > (bases - 2):
             ErrorCode = 4 
