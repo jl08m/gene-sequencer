@@ -14,14 +14,11 @@ def svm_chrom(chromosome_file=None, model_file=None):
     """returns a list from the output of svm_chom.py.
     returns None if exception caught.
 
-
     Keyword arguments:
     chromosome_file -- the file containing the chromosome in the format:
         <{chromosome description}
         ACGTCGTA...
     model_file -- the file containing the model to compare against.
-
-
     """
     try:
         raw_string = subprocess.check_output([CHROM_FILE, chromosome_file, model_file], shell=True, stderr=open('tmp.log', 'a'))
