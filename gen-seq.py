@@ -19,11 +19,17 @@
 from sequence import *
 import sys
 from re import split as re
+
 HEADER_FORM = 2
 HEADER_SPLIT = ' |=|:|-'
+BASES = ['A', 'C', 'G', 'T']
+NUM_BASES = len(BASES)
+_sequence = ''
+_seq_length = 0
 
 # example usage: geneseq.py somesequence.fasta 4,2,2,0,0 output.txt
-USAGE = """USAGE: gen-seq.py <sequence> <bases, spacer length, spacer position, beginning, end]> \n"""
+USAGE = "USAGE: gen-seq.py <sequence> <bases, spacer length, spacer position, beginning, end]> \
+         more help:  gen-seq.py help"
 HELP = """  Sequence file format:
             sequence ID string
             sequence (may be in multiple lines with line breaks)
@@ -51,17 +57,29 @@ HELP = """  Sequence file format:
                                 Default position is the end of the sequence.
 
             Example:
-                Parameters: 2,2,2,2,8
+                Parameters: 4,2,2,3,8
 
                 Position:   1 2 3 4 5 6 7 8 9 10
                 Base:       A C G T A C G T A C
-                
+
+                Positions that get ignored      1 2 9 10
+                                                A C A C
+
+                Loop through segments.
+                Spacer position starts at 2 of segment, length of 2. Sequence positions 4,5 remain unchanged.
+                                                Original        Example permutation
+                Positions for 1st segment       3 4 5 6         3 4 5 6     3 4 5 6
+                                                G T A C         T T A C     T T A G
+
+                Positions for 2nd segment       4 5 6 7         4 5 6 7     4 5 6 7
+                                                T A C G         A A C G     A A C C
+        """
 
 
 def validate_parameters(raw_parameters):
     parameters = []
     try:
-        if(len(raw_parameters) != 5):
+        if len(raw_parameters) != 5:
             raise IndexError('Incorrect number of parameters. Expected 5, actual', len(raw_parameters))
         for raw_arg in raw_parameters:
             arg = int(raw_arg, 10)
@@ -77,7 +95,7 @@ def validate_parameters(raw_parameters):
 
         if bases < 1:
             raise ValueError("Bases to change cannot be less than 1")
-        if bases > self.length:
+        if bases > _seq_length:
             raise ValueError("Bases to change cannot be greater than length of sequence")
 
         if spacer_length > (bases-2):
@@ -87,12 +105,12 @@ def validate_parameters(raw_parameters):
 
         if start < 1:
             raise ValueError("Start Position cannot be less than 1")
-        if start > self.length:
+        if start > _seq_length:
             raise ValueError("Start Position cannot be greater than length of Sequence")
 
         if end < start:
             raise ValueError("End Position cannot be less than start position")
-        if end > self.length:
+        if end > _seq_length:
             raise ValueError("End Position cannot be more than length of Sequence")
 
     except TypeError, e:
@@ -109,14 +127,14 @@ def get_sequence(sequence_filename):
     try:
         sequence_file = open(sequence_filename, 'r')
         sequence_id = sequence_file.readline()
-        SEQUENCE = sequence_file.read().replace('\n', '')
+        global _sequence
+        _sequence = sequence_file.read().replace('\n', '')
+        global _seq_length
+        _seq_length = len(_sequence)
+        sequence_file.close()
 
     except IOError, e:
         sys.stderr('Error encountered opening file:', e)
-
-    finally:
-        sequence_file.close()
-
 
 def print_header(sequence_id):
     header = sequence_id.split()
@@ -133,15 +151,20 @@ def print_header(sequence_id):
 
 # Parse command line
 if len(sys.argv) != 3:
-    sys.stderr.write(usage)
+    if len(sys.argv) == 1 && sys.argv[1] == 'help':
+        sys.stdout.write(USAGE)
+        sys.stdout.write(HELP)
+        sys.exit(0)
+    sys.stderr.write(USAGE)
     sys.exit(1)
 original_sequence_filename = sys.argv[1]
 parameter_str = sys.argv[2]
 
+# Open Sequence
+get_sequence(sys.argv[1])
+
 # Get parameters
 params = validate_parameters(parameter_str.split(','))
-
-
 
 # Print sequence info
 sys.stderr.write("Sequence header = %s \n" % seq_id)
@@ -179,6 +202,3 @@ finalout = sorted(finalout, key=itemgetter("mutations start", "mutations end", "
 
 finalout = {"gene id": gene_id, "chrom": chrom_id, "range start": range_start, "sequence length": len(SEQUENCE),\
              "base sequence": {"sequence": SEQUENCE}, "range end": range_end, "number of sequences": len(finalout), "list": finalout}
-
-#output
-output_file.write(json.dumps(finalout, indent=2))
